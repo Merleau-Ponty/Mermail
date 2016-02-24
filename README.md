@@ -1,2 +1,2 @@
 # Mermail
-Un mini webmail
+Un mini client de messagerie
