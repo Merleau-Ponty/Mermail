@@ -1,4 +1,4 @@
-package MerMail2;
+package miniMessagerie;
 
 import java.io.Serializable;
 
@@ -10,9 +10,8 @@ class Compte implements Serializable
 	private int port;
 	private String user;
 	private String password;
-	private boolean courant;
 
-	// Constructeur avec paramï¿½tres
+	// Constructeur avec paramètres
 	public Compte(String titre, String host, int port, String user, String password)
 	{
 		this.titre = titre;
@@ -20,9 +19,8 @@ class Compte implements Serializable
 		this.port = port;
 		this.user = user;
 		this.password = password;
-		this.courant = false;
 	}
-	// Constructeur sans paramï¿½tres
+	// Constructeur sans paramètres
 	public Compte()
 	{
 	this.titre = "titre";
@@ -66,17 +64,5 @@ class Compte implements Serializable
 	}
 	public void setUser(String user) {
 		this.user = user;
-	}
-	/**
-	 * @return the courant
-	 */
-	public boolean isCourant() {
-		return courant;
-	}
-	/**
-	 * @param courant the courant to set
-	 */
-	public void setCourant(boolean courant) {
-		this.courant = courant;
 	}
 }
