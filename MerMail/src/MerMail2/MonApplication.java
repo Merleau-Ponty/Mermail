@@ -1,6 +1,7 @@
 package MerMail2;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.MenuBar;
@@ -48,13 +49,15 @@ public class MonApplication extends JFrame
 {
 public static ArrayList<Compte> listeComptes = new ArrayList<Compte>();
 static int courant;
-
+public static Compte cc = null;
+public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mermail", "p@ssw0rd");
   
 /* 
   //Compte GMAIL PPE
   private String popServer = "pop.gmail.com";
   private String user = "ppe.merleau" , password = "ppe@2016";
   private int port = 110;
+  
 */
 
   private JLabel status = new JLabel("Prêt...");
@@ -63,9 +66,14 @@ static int courant;
   private Vector messages2 = new Vector();	//ajout perso
   private JList msgList = new JList();
   public static JMenuBar menuBar = new JMenuBar();
+  static GCompte gC = new GCompte();
 
   public MonApplication ()
   {
+	// INSTANCIATION GCOMPTE
+	listeComptes.add(compteDefault);
+	compteDefault.setCourant(true);
+	final GMessage gM = new GMessage();
 	  
 	// GUI: GET CONTENT PANE
 	Container contentPane = this.getContentPane();
@@ -78,7 +86,7 @@ static int courant;
 	JMenuItem popMsgItem = new JMenuItem("Lire Messages", 2);
     fMenu.add(popMsgItem);
     fMenu.addSeparator();
-    JMenuItem exitItem = new JMenuItem("Sortie", 2);
+    JMenuItem exitItem = new JMenuItem("Quitter", 2);
     fMenu.add(exitItem);
 	
 	// GUI: STATUS BAR
@@ -103,6 +111,9 @@ static int courant;
 
     coeur.add(SPlist, BorderLayout.WEST);
     coeur.add(SPbody, BorderLayout.EAST);
+    
+    Component m = new Message("a", "b", "a@k?fr", "mlpo", "ihuiyg", "14/05/1865", 12345, 1);
+    msgList.add(m);
     contentPane.add(coeur);
 
 
@@ -115,10 +126,11 @@ static int courant;
 				FileOutputStream fo = new FileOutputStream("Data.dat");
 				ObjectOutputStream oo = new ObjectOutputStream(fo);
 				oo.writeObject(listeComptes);
+				System.out.println("Info: Compte(s) sauvé(s)");
 			}
 			catch (IOException f)
 			{
-				System.out.println("Erreur : L'enregistrement des données à échoué. Veuillez recommencez ultérieurement.");
+				System.out.println("Erreur : L'enregistrement des données à échoué. Veuillez recommencez ultérieurement." + f.getMessage());
 			}
               setVisible(false);
               dispose();
@@ -141,12 +153,12 @@ static int courant;
               System.exit(0);
     }});
 
-/*
+
    popMsgItem.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
-            getMessages();
+            gM.getMessages();
     }});
-*/
+
     
 
     msgList.addMouseListener(new MouseAdapter() {
@@ -160,8 +172,7 @@ static int courant;
 
     pack();
     
-    // INSTANCIATION GCOMPTE
-    GCompte gC = new GCompte();
+    
   }
 
   
@@ -172,16 +183,23 @@ static int courant;
   public static void main ( String args[] )
   {
   	
-  	try
+  	try //MCP: Chargement des comptes + affichage dans la console
 	{
 		FileInputStream fi = new FileInputStream("Data.dat");
 		ObjectInputStream oi = new ObjectInputStream(fi);
 		listeComptes = (ArrayList) oi.readObject();
-		
+		System.out.println("Info: "+ listeComptes.size()+ " Compte(s) chargé(s) :");
+		for (Compte c : listeComptes) {
+			if(c.isCourant())	{
+				System.out.println("#"+c.getTitre() +" - "+ c.getUser()+"@"+c.getHost());
+			}
+			else
+				System.out.println(c.getTitre() +" - "+ c.getUser()+"@"+c.getHost());
+		}
 	}
 	catch (IOException e)
 	{
-		System.out.println("Erreur: Échec du chargement des données main");
+		System.out.println("Erreur: Échec du chargement des données main" + e.getMessage());
 		//System.exit(0);
 	}
 	catch (ClassNotFoundException se)

@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -18,6 +19,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 class GMessage	{
+	
+	private ArrayList<Compte> listeComptes;
+	GCompte gC = MonApplication.gC;
 	
 	public GMessage()	{
 		/*
@@ -44,6 +48,7 @@ class GMessage	{
 	    coeur.add(SPbody, BorderLayout.EAST);
 	    contentPane.add(coeur);
 	    */
+		
 	}
 	
 	// TODO: Ajouter la méthode getMessages et getMessage
@@ -53,84 +58,91 @@ class GMessage	{
 	      BufferedReader from;
 	      String str,title, msg;
 	      Vector v = new Vector();
-
+	      Compte cc = gC.getCompteCourant();
 	      try {
-	    	  System.out.println(""+ 110 + "" + "");
-	    	  Socket socket = new Socket(InetAddress.getByName(""),110);
-	    	  System.out.println("socket OK");
-	    	  //socket.connect(socket.getRemoteSocketAddress(), 60);
+	    	System.out.println("Début de la requete");
+	    	Socket s = new Socket(InetAddress.getByName(cc.getHost()),cc.getPort());
+
+	    	System.out.println("Socket bon");
+	    	try{ s.connect(s.getRemoteSocketAddress(), 60); 
+	    		System.out.println("Info: Connection au socket réussi");
+	    	} catch(Exception e)	{
+	    		System.out.println("Erreur: Connection au socket en échec \r\n " + e.getMessage());
+	    	}
 	        
 	        to = new PrintWriter(
 	                    new BufferedWriter (
 	                        new OutputStreamWriter (
-	                            socket.getOutputStream())),true);
+	                            s.getOutputStream())),true);
 	        from = new BufferedReader(
 	                   new InputStreamReader (
-	                            socket.getInputStream()));
+	                            s.getInputStream()));
 	        
-
+	        System.out.println("Info: Récupération des messages ...");
+	        // USER
 	        while ( ! (from.readLine()).startsWith("+OK") );
-	        String user = "";
-			to.println("USER "+user );
-	        System.out.println("USER "+user);
-	        String rep1 = from.readLine();
-	        System.out.println("rep1 "+rep1);
+				to.println("USER "+ cc.getUser() );
+		        System.out.println("USER "+ cc.getUser());
+		        String rep1 = from.readLine();
+		        System.out.println("rep1 "+rep1);
 	        while ( ! rep1.startsWith("+OK"));
-	        String password = "";
-			System.out.println("PASS avant "+password );
-	        to.println("PASS "+password);
-	        System.out.println("PASS après"+password);
-	        while ( ! (from.readLine()).startsWith("+OK") );
-
+	        // PASSWORD			
+	        to.println("PASS "+ cc.getPassword());	        
+	        // LIST
 	        to.println("LIST");
 	        int nbmsg = 0;
 	        while ( ! (from.readLine()).startsWith("+OK") );
 	        do {
-	        	nbmsg++;
-	        	System.out.println("Boucle de lecture messages");
+	          nbmsg++;
 	          str = from.readLine();
 	          if ( str.compareTo(".") != 0 ) v.add(str);
 	        } while ( str.compareTo(".") != 0 );
 			
-	        System.out.println("nombre de messages "+nbmsg);
-			System.out.println("taille de la liste v "+v.size());
+	        System.out.println("Nb de messages: " + nbmsg);
+			System.out.println("Taille de la liste: "+v.size());
 	        for ( int i =0; i < v.size(); i++ ) {
 	        	
 	          title = (String ) v.elementAt(i);
 	          StringTokenizer t = new StringTokenizer(title);
 			  String t1 =t.nextToken();
-	          int t2 =Integer.parseInt(t.nextToken());
-	          System.out.println("Taille du message  --> "+t2);
+	          int taille =Integer.parseInt(t.nextToken());
+	          //System.out.println("Taille du message  --> "+t2);
 	          //to.println("RETR "+(new StringTokenizer(title)).nextToken()+"\r");
 	          to.println("RETR "+t1+"\r");
+	          System.out.println("S: RETR "+ t1);
 	          while ( ! (from.readLine()).startsWith("+OK") );
-	          	if(t2>30000)
+	          	if(taille > 30000)
 	          		msg = "Message trop grand";
 	          	else {
 	          
 	          		msg = "";
 	          		do {
 	            		msg += from.readLine() + "\n";
+	            		v.add(msg);
+	            		
 	          		} while ( ! msg.endsWith("\n.\n") );
+	          		
 	          	//messages.add(new PopMessage(title, msg));
 	          	}	
 	          		//messages.add(title);
 	          		//messages2.add(msg);
 	          	
-	          	System.out.println("Titre du message --> "+title);
-	          	System.out.println("message n° "+i+"==================================================================");
+	          	//System.out.println("Titre: "+title);
+	          	System.out.println("#"+ (i+1) +" - - - - - - - - - -");
+	          	System.out.println(taille+ " octets");
+	          
 	        }
 	        to.println("QUIT");
-	        System.out.println("==========================================================================");
+	        //System.out.println("- - - - - - - - - -");
 			//String test = (String ) messages.elementAt(0);
 			//System.out.println("*************"+test);
 	        //msgList.setListData(messages);
 
 	        //status.setText("Prêt ...");
 
-	        socket.close();
+	        s.close();
 
-	      } catch ( Exception e ) {System.err.println("GetMessages : "+e.getMessage());}
+	      } catch ( Exception e ) {System.err.println("Erreur: Connexion impossible à "+ cc.getUser() +"@"+cc.getHost()+"\r\n" +e.getMessage());}
 
 
 	  }

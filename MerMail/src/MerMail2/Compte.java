@@ -10,6 +10,7 @@ class Compte implements Serializable
 	private int port;
 	private String user;
 	private String password;
+	private boolean courant;
 
 	// Constructeur avec param�tres
 	public Compte(String titre, String host, int port, String user, String password)
@@ -19,6 +20,7 @@ class Compte implements Serializable
 		this.port = port;
 		this.user = user;
 		this.password = password;
+		this.courant = false;
 	}
 	// Constructeur sans param�tres
 	public Compte()
@@ -64,5 +66,17 @@ class Compte implements Serializable
 	}
 	public void setUser(String user) {
 		this.user = user;
+	}
+	/**
+	 * @return the courant
+	 */
+	public boolean isCourant() {
+		return courant;
+	}
+	/**
+	 * @param courant the courant to set
+	 */
+	public void setCourant(boolean courant) {
+		this.courant = courant;
 	}
 }

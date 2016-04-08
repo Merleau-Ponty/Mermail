@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,12 +36,12 @@ public class GCompte extends JPanel
   
   	
   
-
+  
   public GCompte()
   {
-    this(new Compte());
     monMenu = MonApplication.menuBar;
     monMenu.add(compteMenu);
+    
     // Sous-menus
  	  JMenuItem ajoutCompteItem = new JMenuItem("Ajout d'un compte");
  	  compteMenu.add(ajoutCompteItem);
@@ -55,22 +56,24 @@ public class GCompte extends JPanel
 		 ajoutCompteItem.addActionListener(new ActionListener(){
 		         public void actionPerformed(ActionEvent e){
 		         ajoutComptePop();
-		}});
-		 
+		}});		 
 		 modifCompteItem.addActionListener(new ActionListener(){
 		     public void actionPerformed(ActionEvent e){
 		     	modifComptePop();
-		}});
-		 
+		}});		 
 		 supprCompteItem.addActionListener(new ActionListener(){
 		     public void actionPerformed(ActionEvent e){
 		     	supprComptePop();
-		}});
-		 
+		}});		 
 		 defCompteItem.addActionListener(new ActionListener(){
 		     public void actionPerformed(ActionEvent e){
 		     	defComptePop();
 		}});
+  }
+  public Compte getCompteCourant()	{
+	// Retourne l'objet Compte qui est le compte courant  
+	return listeComptes.get(courant);
+	  
   }
   
   protected void ajoutComptePop()
@@ -166,6 +169,7 @@ public class GCompte extends JPanel
   	}
   }
   protected void defComptePop(){
+	  listeComptes = MonApplication.listeComptes;
 	  	if(listeComptes.size()==0)
 	  	{
 	  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
@@ -195,7 +199,7 @@ public class GCompte extends JPanel
 				try
 				{
 					FileOutputStream fo = new FileOutputStream("data2.dat");
-					//DataOutputStream Do = new DataOutputStream(fo);
+					DataOutputStream Do = new DataOutputStream(fo);
 					fo.write(courant);
 					fo.close();
 				}
