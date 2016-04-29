@@ -14,13 +14,16 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.Character.Subset;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -63,8 +66,7 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
   private JLabel status = new JLabel("Prêt...");
   private JTextArea Jbody = new JTextArea(10,50);
   private Vector messages = new Vector();
-  private Vector messages2 = new Vector();	//ajout perso
-  private JList msgList = new JList();
+  private Vector messages2 = new Vector();	//ajout perso  
   public static JMenuBar menuBar = new JMenuBar();
   static GCompte gC = new GCompte();
 
@@ -100,6 +102,8 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
     // TODO: IMPLÉMENTER L'OBJET GRAPHIQUE DANS GMESSAGE AU LIEU DE L'APPLICATION
     JPanel coeur = new JPanel();
     JScrollPane SPbody, SPlist;
+    String[] faux_messages = { "Message 1" , "Message 2", "Message 3" };
+    final JList msgList = new JList(faux_messages);
     coeur.setLayout(new BorderLayout());
 
     SPbody = new JScrollPane(Jbody,
@@ -112,8 +116,10 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
     coeur.add(SPlist, BorderLayout.WEST);
     coeur.add(SPbody, BorderLayout.EAST);
     
-    Component m = new Message("a", "b", "a@k?fr", "mlpo", "ihuiyg", "14/05/1865", 12345, 1);
-    msgList.add(m);
+    Message m = new Message("a", "b", "a@k?fr", "mlpo", "ihuiyg", "14/05/1865", 12345, 1);
+    
+    setVisible(true);
+    
     contentPane.add(coeur);
 
 
@@ -126,6 +132,8 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 				FileOutputStream fo = new FileOutputStream("Data.dat");
 				ObjectOutputStream oo = new ObjectOutputStream(fo);
 				oo.writeObject(listeComptes);
+				oo.flush();
+				oo.close();
 				System.out.println("Info: Compte(s) sauvé(s)");
 			}
 			catch (IOException f)
@@ -162,11 +170,78 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
     
 
     msgList.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
+        
+
+		public void mouseClicked(MouseEvent e) {
+        	Message leMessage = new Message();
+        	int ch;
+        	StringBuffer strContent = new StringBuffer("");
             int index = msgList.locationToIndex(e.getPoint());
-            if ( index >= 0 && index < messages.size())
+   //         if ( index >= 0 && index < messages.size())
    //        	Jbody.setText(((PopMessage)messages.elementAt(index)).message);
-          Jbody.setText(((String)messages2.elementAt(index)));
+            try {
+				FileInputStream fi = new FileInputStream("mail_source_mermail.txt");
+				while((ch = fi.read()) != -1)	{
+					strContent.append((char)ch);
+				}
+				fi.close();
+				String leMsg = strContent.toString();
+				String[] arrMsg = leMsg.split("stop|\\n");
+				String ArrMsgLine = "";
+				String from = "From:";
+				String to = "To:";
+				String from_adrr = "Return-Path:";
+				String subject = "Subject:";
+				String date = "Date:";
+				int line_start = 0;
+				int line_end = 0;
+				String contenu = "";
+				
+				for (int i = 0; i < arrMsg.length; i++) {
+					if(arrMsg[i].startsWith(from))	{
+						leMessage.setExpediteur(arrMsg[i].substring(from.length()).trim());
+					}
+					if(arrMsg[i].startsWith(to))	{
+						leMessage.setDestinataire(arrMsg[i].substring(to.length()).trim());
+					}
+					if(arrMsg[i].startsWith(from_adrr))	{
+						leMessage.setAdresse_destinataire(arrMsg[i].substring(from_adrr.length()).trim());
+					}
+					if(arrMsg[i].startsWith(subject))	{
+						leMessage.setObjet(arrMsg[i].substring(subject.length()).trim());
+					}
+					if(arrMsg[i].startsWith(date))	{
+						leMessage.setDate(arrMsg[i].substring(date.length()).trim());
+					}
+					if(arrMsg[i].startsWith("<html>"))	{
+						line_start = i;
+						System.out.println("s" + line_start);
+					}
+					if(arrMsg[i].startsWith("</html>"))	{
+						line_end = i;
+						System.out.println("e" + line_end);
+					}
+ 
+					leMessage.setTaille(strContent.length()*8);
+					ArrMsgLine += i + " - " + arrMsg[i] + "\r\n";
+				}
+				System.out.println((line_end - line_start));
+				for(int compt = line_start; compt < (line_end - line_start)+line_start; compt++)	{
+					contenu += arrMsg[compt];
+				}
+				leMessage.setContenu(contenu);
+				Jbody.setText(leMessage.toString());
+				System.out.println(leMessage.toString());
+		
+				
+				
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
         }
     });
 

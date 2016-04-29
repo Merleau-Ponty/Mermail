@@ -135,9 +135,20 @@ class Message {
 		this.status = status;
 	}
 
-	public String toString()
-    {
-      return objet;
-    }
+	public Message() {
+		// TODO Auto-generated constructor stub
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Message [expediteur=" + expediteur + ", destinataire=" + destinataire + ", adresse_destinataire="
+				+ adresse_destinataire + ", objet=" + objet + ", contenu=" + contenu + ", date=" + date + ", taille="
+				+ taille + " octets, status=" + status + "]";
+	}
+
+
 
   }
