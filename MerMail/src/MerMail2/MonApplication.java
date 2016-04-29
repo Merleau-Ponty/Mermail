@@ -1,10 +1,8 @@
-package MerMail2;
+package miniMessagerie;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
-import java.awt.MenuBar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -26,6 +24,7 @@ import java.io.PrintWriter;
 import java.lang.Character.Subset;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -42,64 +41,88 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.BevelBorder;
 
-import MerMail2.Compte;
-import MerMail2.GCompte;
-import MerMail2.MonApplication;
-import MerMail2.Message;
+import miniMessagerie.Compte;
+import miniMessagerie.GCompte;
+import miniMessagerie.MonApplication;
+import miniMessagerie.panneauSelectionCompte;
+import miniMessagerie.Message;
+
+import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ResultSet;
+import com.mysql.jdbc.Statement;
 
 @SuppressWarnings("serial")
 public class MonApplication extends JFrame
 {
 public static ArrayList<Compte> listeComptes = new ArrayList<Compte>();
 static int courant;
-public static Compte cc = null;
-public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mermail", "p@ssw0rd");
-  
-/* 
+
+
+/*
   //Compte GMAIL PPE
   private String popServer = "pop.gmail.com";
   private String user = "ppe.merleau" , password = "ppe@2016";
   private int port = 110;
-  
 */
 
-  private JLabel status = new JLabel("Prêt...");
+  private JLabel status = new JLabel("Prï¿½t...");
   private JTextArea Jbody = new JTextArea(10,50);
   private Vector messages = new Vector();
-  private Vector messages2 = new Vector();	//ajout perso  
+  private Vector messages2 = new Vector();	//ajout perso
   public static JMenuBar menuBar = new JMenuBar();
   static GCompte gC = new GCompte();
-
-  public MonApplication ()
+  public static Base maBase = new Base();
+  public MonApplication () throws ClassNotFoundException, SQLException
   {
-	// INSTANCIATION GCOMPTE
-	listeComptes.add(compteDefault);
-	compteDefault.setCourant(true);
-	final GMessage gM = new GMessage();
-	  
-	// GUI: GET CONTENT PANE
-	Container contentPane = this.getContentPane();
-	contentPane.setLayout(new BorderLayout());
-	    
-	// GUI: MENU
-	JMenu fMenu = new JMenu("Fichiers");
-	menuBar.add(fMenu);
-	setJMenuBar(menuBar);
-	JMenuItem popMsgItem = new JMenuItem("Lire Messages", 2);
+    JMenuBar menuBar = new JMenuBar();
+
+    JPanel statusbar = new JPanel();
+    JPanel coeur = new JPanel();
+    JScrollPane SPbody, SPlist;
+    /* -----------------------Base maBase = new Base() --------------------------------- */
+    Base maBase = new Base();
+    maBase.getConnexion();
+    maBase.write(courant);
+    maBase.close();
+
+    coeur.setLayout(new BorderLayout());
+
+    Container contentPane = this.getContentPane();
+    contentPane.setLayout(new BorderLayout());
+
+    setJMenuBar(menuBar);
+
+    JMenu fMenu = new JMenu("Fichiers");
+    menuBar.add(fMenu);
+    JMenu compteMenu = new JMenu("Comptes");
+    menuBar.add(compteMenu);
+
+    //JMenuItem popServerItem = new JMenuItem("SetServer", 2);
+    //fMenu.add(popServerItem);
+
+    JMenuItem popMsgItem = new JMenuItem("Lire Messages", 2);
     fMenu.add(popMsgItem);
     fMenu.addSeparator();
-    JMenuItem exitItem = new JMenuItem("Quitter", 2);
+    JMenuItem exitItem = new JMenuItem("Sortie", 2);
     fMenu.add(exitItem);
-	
-	// GUI: STATUS BAR
-    JPanel statusbar = new JPanel();
+
+    JMenuItem ajoutCompteItem = new JMenuItem("ajout d'un compte");
+    compteMenu.add(ajoutCompteItem);
+    JMenuItem modifCompteItem = new JMenuItem("modification d'un compte");
+    compteMenu.add(modifCompteItem);
+    JMenuItem supprCompteItem = new JMenuItem("suppression d'un compte");
+    compteMenu.add(supprCompteItem);
+    compteMenu.addSeparator();
+    JMenuItem defCompteItem = new JMenuItem("choix du compte courant");
+    compteMenu.add(defCompteItem);
+
     statusbar.setLayout(new FlowLayout(FlowLayout.LEFT,5,5));
     statusbar.setBorder(new BevelBorder(BevelBorder.LOWERED));
     contentPane.add(statusbar,BorderLayout.SOUTH );
     statusbar.add(status);
-    
+
     // GUI: LISTE DES MAILS
-    // TODO: IMPLÉMENTER L'OBJET GRAPHIQUE DANS GMESSAGE AU LIEU DE L'APPLICATION
+    // TODO: IMPLï¿½MENTER L'OBJET GRAPHIQUE DANS GMESSAGE AU LIEU DE L'APPLICATION
     JPanel coeur = new JPanel();
     JScrollPane SPbody, SPlist;
     String[] faux_messages = { "Message 1" , "Message 2", "Message 3" };
@@ -115,11 +138,11 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 
     coeur.add(SPlist, BorderLayout.WEST);
     coeur.add(SPbody, BorderLayout.EAST);
-    
+
     Message m = new Message("a", "b", "a@k?fr", "mlpo", "ihuiyg", "14/05/1865", 12345, 1);
-    
+
     setVisible(true);
-    
+
     contentPane.add(coeur);
 
 
@@ -134,11 +157,12 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 				oo.writeObject(listeComptes);
 				oo.flush();
 				oo.close();
-				System.out.println("Info: Compte(s) sauvé(s)");
+				System.out.println("Info: Compte(s) sauvï¿½(s)");
+
 			}
 			catch (IOException f)
 			{
-				System.out.println("Erreur : L'enregistrement des données à échoué. Veuillez recommencez ultérieurement." + f.getMessage());
+				System.out.println("Erreur : L'enregistrement des donnï¿½es ï¿½ ï¿½chouï¿½. Veuillez recommencez ultï¿½rieurement.");
 			}
               setVisible(false);
               dispose();
@@ -156,21 +180,49 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 			}
 			catch (IOException f)
 			{
-				System.out.println("Erreur : L'enregistrement des données à échoué. Veuillez recommencez ultérieurement.");
+				System.out.println("Erreur : L'enregistrement des donnï¿½es ï¿½ ï¿½chouï¿½. Veuillez recommencez ultï¿½rieurement.");
 			}
               System.exit(0);
     }});
 
-
+/*
    popMsgItem.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
-            gM.getMessages();
+            getMessages();
+    }});
+*/
+    ajoutCompteItem.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+            try {
+				ajoutComptePop();
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
     }});
 
-    
+    modifCompteItem.addActionListener(new ActionListener(){
+        public void actionPerformed(ActionEvent e){
+        	modifComptePop();
+}});
+
+    supprCompteItem.addActionListener(new ActionListener(){
+        public void actionPerformed(ActionEvent e){
+        	supprComptePop();
+}});
+
+    defCompteItem.addActionListener(new ActionListener(){
+        public void actionPerformed(ActionEvent e){
+        	try {
+				defComptePop();
+			} catch (ClassNotFoundException | SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+}});
 
     msgList.addMouseListener(new MouseAdapter() {
-        
+
 
 		public void mouseClicked(MouseEvent e) {
         	Message leMessage = new Message();
@@ -196,7 +248,7 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 				int line_start = 0;
 				int line_end = 0;
 				String contenu = "";
-				
+
 				for (int i = 0; i < arrMsg.length; i++) {
 					if(arrMsg[i].startsWith(from))	{
 						leMessage.setExpediteur(arrMsg[i].substring(from.length()).trim());
@@ -221,7 +273,7 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 						line_end = i;
 						System.out.println("e" + line_end);
 					}
- 
+
 					leMessage.setTaille(strContent.length()*8);
 					ArrMsgLine += i + " - " + arrMsg[i] + "\r\n";
 				}
@@ -232,9 +284,9 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
 				leMessage.setContenu(contenu);
 				Jbody.setText(leMessage.toString());
 				System.out.println(leMessage.toString());
-		
-				
-				
+
+
+
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -246,57 +298,190 @@ public Compte compteDefault = new Compte("MerMail", "pop.laposte.net", 110, "mer
     });
 
     pack();
-    
-    
+
   }
 
-  
 
 
-  
-
-  public static void main ( String args[] )
+  protected void ajoutComptePop() throws ClassNotFoundException
   {
-  	
-  	try //MCP: Chargement des comptes + affichage dans la console
+  	GCompte monPanneau = new GCompte();
+  	int retour = JOptionPane.showConfirmDialog(
+			this,
+			monPanneau,
+		    "enregistrement d'un compte",
+		   	JOptionPane.OK_CANCEL_OPTION,
+		    JOptionPane.PLAIN_MESSAGE
+			);
+
+  	if(retour == JOptionPane.OK_OPTION)
+	{
+  		Compte temp = monPanneau.getCompte();
+  		//listeComptes.add(temp);
+  		maBase.sauverEnBase(temp.getTitre(), temp.getUser(),temp.getPassword(),temp.getHost(),temp.getPort());
+
+	}
+  }
+  protected void modifComptePop()
+  {
+  	if(listeComptes.size()==0)
+  	{
+  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
+  	}
+  	else
+  	{
+
+
+  		panneauSelectionCompte monPanneauSelection = new panneauSelectionCompte();
+  		int retour = JOptionPane.showConfirmDialog(
+  					this,
+					monPanneauSelection,
+					"modification d'un compte",
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.PLAIN_MESSAGE
+					);
+
+		if(retour == JOptionPane.OK_OPTION)
+		{
+			Compte temp = (Compte)listeComptes.get(monPanneauSelection.getIndexSelection());
+			GCompte monPanneau = new GCompte(temp);
+			int retour2 = JOptionPane.showConfirmDialog(
+					this,
+					monPanneau,
+					"enregistrement d'un compte",
+					JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.PLAIN_MESSAGE
+					);
+
+			if(retour2 == JOptionPane.OK_OPTION)
+			{
+				Compte temp2 = monPanneau.getCompte();
+				listeComptes.set(monPanneauSelection.getIndexSelection(), temp2);
+
+
+			}
+
+		}
+  	}
+  }
+
+  protected void supprComptePop()
+  {
+  	if(listeComptes.size()==0)
+  	{
+  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
+  	}
+  	else
+  	{
+  		panneauSelectionCompte monPanneau = new panneauSelectionCompte();
+  		int retour = JOptionPane.showConfirmDialog(
+					this,
+		    		monPanneau,
+		    		"supppression d'un compte",
+					JOptionPane.YES_NO_OPTION,
+		    		JOptionPane.PLAIN_MESSAGE
+					);
+
+		if(retour == JOptionPane.OK_OPTION)
+		{
+			listeComptes.remove(monPanneau.getIndexSelection());
+			if(courant == monPanneau.getIndexSelection())
+			{
+				courant = 0;
+			}
+			else if(courant > monPanneau.getIndexSelection())
+			{
+				courant--;
+			}
+
+
+		}
+  	}
+  }
+  protected void defComptePop() throws ClassNotFoundException, SQLException
+  {
+  	if(listeComptes.size()==0)
+  	{
+  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
+  	}
+  	else
+  	{
+  		panneauSelectionCompte monPanneau = new panneauSelectionCompte();
+  		Compte temp2 = (Compte)listeComptes.get(courant);
+  		int retour = JOptionPane.showConfirmDialog(
+					this,
+		    		monPanneau,
+		    		"compte actuel: "+temp2,
+					JOptionPane.YES_NO_OPTION,
+		    		JOptionPane.PLAIN_MESSAGE
+					);
+
+		if(retour == JOptionPane.OK_OPTION)
+		{
+			courant = monPanneau.getIndexSelection();
+			Compte temp = (Compte)listeComptes.get(courant);
+			/*
+			popServer = temp.getHost();
+			user = temp.getUser();
+			password = temp.getPassword();
+			port = temp.getPort();
+			*/
+			try
+			{
+				// A changer pour faire le lien vers la classe BASE
+				//FileOutputStream fo = new FileOutputStream("data2.dat");
+				//DataOutputStream Do = new DataOutputStream(fo);
+				maBase.lireEnBase();
+			}
+			catch (Exception e)
+			{
+				System.out.println("marche po :( , echec du chargement des donnï¿½es");
+				//System.exit(0);
+			}
+
+		}
+  	}
+  }
+
+  public static void main ( String args[] ) throws ClassNotFoundException, SQLException
+  {
+
+  	try
 	{
 		FileInputStream fi = new FileInputStream("Data.dat");
 		ObjectInputStream oi = new ObjectInputStream(fi);
 		listeComptes = (ArrayList) oi.readObject();
-		System.out.println("Info: "+ listeComptes.size()+ " Compte(s) chargé(s) :");
-		for (Compte c : listeComptes) {
-			if(c.isCourant())	{
-				System.out.println("#"+c.getTitre() +" - "+ c.getUser()+"@"+c.getHost());
-			}
-			else
-				System.out.println(c.getTitre() +" - "+ c.getUser()+"@"+c.getHost());
-		}
+		ResultSet rs=maBase.lireEnBase();
+		listeComptes.add(new Compte(rs.getString("titre"),rs.getString("users"),rs.getInt("port"),rs.getString("serveur"),rs.getString("passwords")));
+		System.out.println(listeComptes);
 	}
 	catch (IOException e)
 	{
-		System.out.println("Erreur: Échec du chargement des données main" + e.getMessage());
+		System.out.println("Erreur: ï¿½chec du chargement des donnï¿½es");
 		//System.exit(0);
 	}
 	catch (ClassNotFoundException se)
 	{
-		System.out.println("Erreur: Classe non trouvé");
+		System.out.println("Erreur: Classe non trouvï¿½");
 	}
-	
-	/*
+
+
 	try
 	{
-		FileInputStream fi = new FileInputStream("data2.dat");
+		//////////////////////////////////////////
+		FileInputStream fi = new FileInputStream("data2.dat");//Ouvre le fichier
 		courant = fi.read();
-		
+		//////////////////////////////////////////
+
+		//lire.lireEnBase(String titre, String users, String passwords, String serveur, int port);
 	}
 	catch (IOException e)
 	{
-		System.out.println("Erreur: Échec du chargement des données");
+		System.out.println("Erreur: ï¿½chec du chargement des donnï¿½es");
 		//System.exit(0);
 	}
-	*/
-	
-	
+
+
     (new MonApplication()).setVisible(true);
 
   }
