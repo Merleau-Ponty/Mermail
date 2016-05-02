@@ -62,11 +62,12 @@ public class Base {
 				}
 			}
 		}
-public void Modification(String titre, String users, String passwords, String serveur, int port) throws ClassNotFoundException{
+		public void Modification(Compte leCompte, String titre, String users, String passwords, String serveur, int port) throws ClassNotFoundException{
 			
 			try{
 				//a finir le update to compte set paramatres where condition
-				String sql = "UPDATE TO compte(titre, users, passwords, serveur, port) SET ('" + titre + "','" + users + "','" + passwords + "','" + serveur + "'," + port +");";
+				
+				String sql = "UPDATE TO compte SET ('titre =" + titre + "','users =" + users + "','passwords =" + passwords + "','serveur =" + serveur + "',port =" + port + "WHERE titre = "+leCompte.getTitre();
 				// execution de la requete
 				getStatement().executeUpdate(sql);
 			}catch (SQLException e){
@@ -83,7 +84,27 @@ public void Modification(String titre, String users, String passwords, String se
 			}
 		}
 		// Lecture des données
+		public void Suppression(String titre, String users, String passwords, String serveur, int port) throws ClassNotFoundException{
+	
+			try{
 		
+				String sql = "DELETE FROM compte where titre= '"+ titre +"'"; 
+				// execution de la requete
+				getStatement().executeUpdate(sql);
+			}catch (SQLException e){
+				e.printStackTrace();
+			}catch (ClassNotFoundException e){
+				e.printStackTrace();
+			} finally {
+			try{
+				getConnexion().close();
+				getStatement().close();
+			}catch (SQLException e){
+				e.printStackTrace();
+			}
+			}
+		}
+	
 		public ResultSet lireEnBase() throws ClassNotFoundException {
 			
 			try{

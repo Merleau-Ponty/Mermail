@@ -185,12 +185,22 @@ static int courant;
     
     modifCompteItem.addActionListener(new ActionListener(){
         public void actionPerformed(ActionEvent e){
-        	modifComptePop();
+            try {
+            	modifComptePop();
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 }});
     
     supprCompteItem.addActionListener(new ActionListener(){
         public void actionPerformed(ActionEvent e){
-        	supprComptePop();
+            try {
+            	supprComptePop();
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 }});
     
     defCompteItem.addActionListener(new ActionListener(){
@@ -237,9 +247,9 @@ static int courant;
   		
 	}
   }
-  protected void modifComptePop()
+  protected void modifComptePop() throws ClassNotFoundException
   {
-  	if(listeComptes.size()==0)
+  	/*if(listeComptes.size()==0)
   	{
   		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
   	}
@@ -277,12 +287,28 @@ static int courant;
 			}
 		
 		}
-  	}
-  }
+  	}*/
+	  	GCompte monPanneau = new GCompte();
+	  	int retour = JOptionPane.showConfirmDialog(
+				this,
+				monPanneau,
+			    "enregistrement d'un compte",
+			   	JOptionPane.OK_CANCEL_OPTION,
+			    JOptionPane.PLAIN_MESSAGE
+				);
+	  	
+	  	if(retour == JOptionPane.OK_OPTION)
+		{
+	  		Compte temp = monPanneau.getCompte();
+	  		//listeComptes.add(temp);
+	  		maBase.Modification(temp, temp.getTitre(), temp.getUser(),temp.getPassword(),temp.getHost(),temp.getPort());
+	  		
+		}
+	  }
   
-  protected void supprComptePop()
+  protected void supprComptePop() throws ClassNotFoundException
   {
-  	if(listeComptes.size()==0)
+  	/*if(listeComptes.size()==0)
   	{
   		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
   	}
@@ -311,7 +337,23 @@ static int courant;
 			
 		
 		}
-  	}
+  	}*/
+	  GCompte monPanneau = new GCompte();
+	  	int retour = JOptionPane.showConfirmDialog(
+				this,
+				monPanneau,
+			    "enregistrement d'un compte",
+			   	JOptionPane.OK_CANCEL_OPTION,
+			    JOptionPane.PLAIN_MESSAGE
+				);
+	  	
+	  	if(retour == JOptionPane.OK_OPTION)
+		{
+	  		Compte temp = monPanneau.getCompte();
+	  		//listeComptes.add(temp);
+	  		maBase.Suppression(temp.getTitre(), temp.getUser(),temp.getPassword(),temp.getHost(),temp.getPort());
+	  		
+		}
   }
   protected void defComptePop() throws ClassNotFoundException, SQLException
   {
@@ -368,7 +410,7 @@ static int courant;
 		listeComptes = (ArrayList) oi.readObject();
 		ResultSet rs=maBase.lireEnBase();
 		listeComptes.add(new Compte(rs.getString("titre"),rs.getString("users"),rs.getInt("port"),rs.getString("serveur"),rs.getString("passwords")));
-		System.out.println(listeComptes);
+		//System.out.println(listeComptes);
 	}
 	catch (IOException e)
 	{
