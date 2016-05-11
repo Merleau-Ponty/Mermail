@@ -1,4 +1,4 @@
-package miniMessagerie;
+package MerMail2;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
@@ -7,23 +7,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.Socket;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 import java.util.Vector;
 
 import javax.swing.JFrame;
@@ -32,92 +23,91 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.BevelBorder;
 
-import miniMessagerie.Compte;
-import miniMessagerie.GCompte;
-import miniMessagerie.MonApplication;
-import miniMessagerie.panneauSelectionCompte;
-import miniMessagerie.Message;
-
-import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ResultSet;
-import com.mysql.jdbc.Statement;
+
+import MerMail2.Base;
+import MerMail2.Compte;
+import MerMail2.GCompte;
+import MerMail2.MonApplication;
+import MerMail2.Message;
 
 @SuppressWarnings("serial")
-public class MonApplication extends JFrame 
+public class MonApplication extends JFrame
 {
 public static ArrayList<Compte> listeComptes = new ArrayList<Compte>();
 static int courant;
-
+public static Compte cc = null;
   
-/* 
-  //Compte GMAIL PPE
-  private String popServer = "pop.gmail.com";
-  private String user = "ppe.merleau" , password = "ppe@2016";
-  private int port = 110;
-*/
+	
+	private JLabel status = new JLabel("Prêt...");
+	private JTextArea Jbody = new JTextArea(10,50);
+	public static JMenuBar menuBar = new JMenuBar();
+	static GCompte gC;
+	public static Base maBase = new Base();
 
-  private JLabel status = new JLabel("Prêt...");
-  private JTextArea Jbody = new JTextArea(10,50);
-  private Vector messages = new Vector();
-  private Vector messages2 = new Vector();	//ajout perso
-  private JList msgList = new JList();
-  public static Base maBase = new Base();
+	private Base InitDB(Base laBase) {
+	  try {
+		laBase.getConnexion();
+	  } catch (ClassNotFoundException | SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	  }
+		laBase.write(courant);
+		laBase.close();
+		return laBase;
+ 	}
   
-  public MonApplication () throws ClassNotFoundException, SQLException
+	public MonApplication () throws ClassNotFoundException, SQLException
   {
-    JMenuBar menuBar = new JMenuBar();
-
-    JPanel statusbar = new JPanel();
-    JPanel coeur = new JPanel();
-    JScrollPane SPbody, SPlist;
-    /* -----------------------Base maBase = new Base() --------------------------------- */
-    Base maBase = new Base();
-    maBase.getConnexion();
-    maBase.write(courant);
-    maBase.close();
-
-    coeur.setLayout(new BorderLayout());
-
-    Container contentPane = this.getContentPane();
-    contentPane.setLayout(new BorderLayout());
-
-    setJMenuBar(menuBar);
-
-    JMenu fMenu = new JMenu("Fichiers");
-    menuBar.add(fMenu);
-    JMenu compteMenu = new JMenu("Comptes");
-    menuBar.add(compteMenu);
-
-    //JMenuItem popServerItem = new JMenuItem("SetServer", 2);
-    //fMenu.add(popServerItem);
+	// INSTANCIATION BASE DE DONNÉES
+	  try	{
+		  Base maBase = this.maBase;
+		  InitDB(maBase);
+	  } catch (Exception e)	{
+		  System.err.println("Erreur: " + e + "\r\n Détails :" + e.getMessage());
+	  }
     
-    JMenuItem popMsgItem = new JMenuItem("Lire Messages", 2);
+    
+    // INSTANCIATION GMESSAGE
+    final GMessage gM = new GMessage();
+    
+ // INSTANCIATION GCOMPTE
+
+ 	final GCompte gC = new GCompte();
+ 	
+	// GUI: GET CONTENT PANE
+	Container contentPane = this.getContentPane();
+	contentPane.setLayout(new BorderLayout());
+	    
+	// GUI: MENU
+	JMenu fMenu = new JMenu("Fichiers");
+	menuBar.add(fMenu);
+	setJMenuBar(menuBar);
+	JMenuItem popMsgItem = new JMenuItem("Lire Messages", 2);
     fMenu.add(popMsgItem);
     fMenu.addSeparator();
-    JMenuItem exitItem = new JMenuItem("Sortie", 2);
+    JMenuItem exitItem = new JMenuItem("Quitter", 2);
     fMenu.add(exitItem);
-    
-    JMenuItem ajoutCompteItem = new JMenuItem("ajout d'un compte");
-    compteMenu.add(ajoutCompteItem);
-    JMenuItem modifCompteItem = new JMenuItem("modification d'un compte");
-    compteMenu.add(modifCompteItem);
-    JMenuItem supprCompteItem = new JMenuItem("suppression d'un compte");
-    compteMenu.add(supprCompteItem);
-    compteMenu.addSeparator();
-    JMenuItem defCompteItem = new JMenuItem("choix du compte courant");
-    compteMenu.add(defCompteItem);
-
+	
+	// GUI: STATUS BAR
+    JPanel statusbar = new JPanel();
     statusbar.setLayout(new FlowLayout(FlowLayout.LEFT,5,5));
     statusbar.setBorder(new BevelBorder(BevelBorder.LOWERED));
     contentPane.add(statusbar,BorderLayout.SOUTH );
     statusbar.add(status);
-
+    
+    // GUI: LISTE DES MAILS
+    // TODO: IMPLÉMENTER L'OBJET GRAPHIQUE DANS GMESSAGE AU LIEU DE L'APPLICATION
+    JPanel coeur = new JPanel();
+    JScrollPane SPbody, SPlist;
+    final String[] faux_messages = { "Message 1" , "Message 2", "Message 3" };
+    final JList msgList = new JList(faux_messages);
+    coeur.setLayout(new BorderLayout());
 
     SPbody = new JScrollPane(Jbody,
                              JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -128,318 +118,143 @@ static int courant;
 
     coeur.add(SPlist, BorderLayout.WEST);
     coeur.add(SPbody, BorderLayout.EAST);
-
+    
+    
+    setVisible(true);
+    
     contentPane.add(coeur);
 
 
-    // add listeners for the window and the various buttons
-    this.addWindowListener( new WindowAdapter(){
-         @SuppressWarnings("resource")
-		public void windowClosing(WindowEvent e){
-         	try
-			{
-				FileOutputStream fo = new FileOutputStream("Data.dat");
-				ObjectOutputStream oo = new ObjectOutputStream(fo);
-				oo.writeObject(listeComptes);
-			}
-			catch (IOException f)
-			{
-				System.out.println("Erreur : L'enregistrement des données à échoué. Veuillez recommencez ultérieurement.");
-			}
-              setVisible(false);
-              dispose();
-              System.exit(0);
-    }});
-
+    
     exitItem.addActionListener( new ActionListener(){
-         @SuppressWarnings("resource")
 		public void actionPerformed(ActionEvent e){
-         	try
-			{
-				FileOutputStream fo = new FileOutputStream("Data.dat");
-				ObjectOutputStream oo = new ObjectOutputStream(fo);
-				oo.writeObject(listeComptes);
-			}
-			catch (IOException f)
-			{
-				System.out.println("Erreur : L'enregistrement des données à échoué. Veuillez recommencez ultérieurement.");
-			}
               System.exit(0);
     }});
 
-/*
    popMsgItem.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
-            getMessages();
+            gM.getMessages();
     }});
-*/
-    ajoutCompteItem.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e){
-            try {
-				ajoutComptePop();
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-    }});
-    
-    modifCompteItem.addActionListener(new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-            try {
-            	modifComptePop();
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-}});
-    
-    supprCompteItem.addActionListener(new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-            try {
-            	supprComptePop();
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-}});
-    
-    defCompteItem.addActionListener(new ActionListener(){
-        public void actionPerformed(ActionEvent e){
-        	try {
-				defComptePop();
-			} catch (ClassNotFoundException | SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-}});
 
+    
+   // ON CLICK
     msgList.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
+        
+
+		public void mouseClicked(MouseEvent e) {
+        	Message leMessage = new Message();
+        	int ch;
+        	StringBuffer strContent = new StringBuffer("");
             int index = msgList.locationToIndex(e.getPoint());
-            if ( index >= 0 && index < messages.size())
+            FileInputStream fi = null;
+   //         if ( index >= 0 && index < messages.size())
    //        	Jbody.setText(((PopMessage)messages.elementAt(index)).message);
-          Jbody.setText(((String)messages2.elementAt(index)));
-        }
+            
+            	int idmail = msgList.locationToIndex(e.getPoint())+1;
+
+					try {
+						fi = new FileInputStream("mail_source_mermail_"+ idmail + ".txt");
+					} catch (FileNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+
+						try {
+							while((ch = fi.read()) != -1)	{
+								strContent.append((char)ch);
+							}
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+							String leMsg = strContent.toString();
+							String[] arrMsg = leMsg.split("stop|\\n");
+							String ArrMsgLine = "";
+							String from = "From:";
+							String to = "To:";
+							String from_adrr = "Return-Path:";
+							String subject = "Subject:";
+							String date = "Date:";
+							int line_start = 0;
+							int line_end = 0;
+							String contenu = "";
+							// EXTRACTION DES DONNÉES
+							for (int i = 0; i < arrMsg.length; i++) {
+								if(arrMsg[i].startsWith(from))	{
+									leMessage.setExpediteur(arrMsg[i].substring(from.length()).trim());
+								}
+								if(arrMsg[i].startsWith(to))	{
+									leMessage.setDestinataire(arrMsg[i].substring(to.length()).trim());
+								}
+								if(arrMsg[i].startsWith(from_adrr))	{
+									leMessage.setAdresse_destinataire(arrMsg[i].substring(from_adrr.length()).trim());
+								}
+								if(arrMsg[i].startsWith(subject))	{
+									leMessage.setObjet(arrMsg[i].substring(subject.length()).trim());
+								}
+								if(arrMsg[i].startsWith(date))	{
+									leMessage.setDate(arrMsg[i].substring(date.length()).trim());
+								}
+								if(arrMsg[i].startsWith("<html>"))	{
+									line_start = i;
+									//System.out.println("s" + line_start);
+								}
+								if(arrMsg[i].startsWith("</html>"))	{
+									line_end = i;
+									//System.out.println("e" + line_end);
+								}
+ 
+							leMessage.setTaille(strContent.length()*8);
+							ArrMsgLine += i + " - " + arrMsg[i] + "\r\n";
+					}
+					//System.out.println((line_end - line_start));
+					for(int compt = line_start; compt < (line_end - line_start)+line_start; compt++)	{
+												contenu += arrMsg[compt];
+					}
+					leMessage.setContenu(contenu);
+					Jbody.setText(leMessage.toStringSimple());
+					System.out.println(leMessage.toStringSimple());
+	
+		}
     });
 
+    ArrayList<Compte> res = null;
+	  res = maBase.lireEnBase();
+	
+	String titres_compt = "";
+	try {
+		if(!res.isEmpty()){
+			for(Compte c : res)	{
+				listeComptes.add(c);
+				titres_compt += "\r\n "+ c.getTitre();
+				MonApplication.cc = maBase.getCourant();
+			}
+			System.out.println(listeComptes.size() + " compte(s) chargé(s) :" + titres_compt);
+			System.out.println(maBase.getCourant().getTitre() + " est le cc! " + MonApplication.cc.getTitre());
+		}
+		
+	} catch (Exception e) {
+		System.err.println("Il n'y a pas de compte dans la base de données");
+	}
     pack();
-
+    
+   
+    
+    
   }
 
-  
-
-  protected void ajoutComptePop() throws ClassNotFoundException
-  {
-  	GCompte monPanneau = new GCompte();
-  	int retour = JOptionPane.showConfirmDialog(
-			this,
-			monPanneau,
-		    "enregistrement d'un compte",
-		   	JOptionPane.OK_CANCEL_OPTION,
-		    JOptionPane.PLAIN_MESSAGE
-			);
+  public static void main ( String args[] ) throws SQLException, ClassNotFoundException	{
   	
-  	if(retour == JOptionPane.OK_OPTION)
-	{
-  		Compte temp = monPanneau.getCompte();
-  		//listeComptes.add(temp);
-  		maBase.sauverEnBase(temp.getTitre(), temp.getUser(),temp.getPassword(),temp.getHost(),temp.getPort());
-  		
-	}
-  }
-  protected void modifComptePop() throws ClassNotFoundException
-  {
-  	/*if(listeComptes.size()==0)
-  	{
-  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
-  	}
-  	else
-  	{
-  		
-  	
-  		panneauSelectionCompte monPanneauSelection = new panneauSelectionCompte();
-  		int retour = JOptionPane.showConfirmDialog(
-  					this,
-					monPanneauSelection,
-					"modification d'un compte",
-					JOptionPane.YES_NO_OPTION,
-					JOptionPane.PLAIN_MESSAGE
-					);
-	
-		if(retour == JOptionPane.OK_OPTION)
-		{
-			Compte temp = (Compte)listeComptes.get(monPanneauSelection.getIndexSelection());
-			GCompte monPanneau = new GCompte(temp);
-			int retour2 = JOptionPane.showConfirmDialog(
-					this,
-					monPanneau,
-					"enregistrement d'un compte",
-					JOptionPane.OK_CANCEL_OPTION,
-					JOptionPane.PLAIN_MESSAGE
-					);
-	  	
-			if(retour2 == JOptionPane.OK_OPTION)
-			{
-				Compte temp2 = monPanneau.getCompte();
-				listeComptes.set(monPanneauSelection.getIndexSelection(), temp2);
-				
-				
-			}
+	  
 		
-		}
-  	}*/
-	  	GCompte monPanneau = new GCompte();
-	  	int retour = JOptionPane.showConfirmDialog(
-				this,
-				monPanneau,
-			    "enregistrement d'un compte",
-			   	JOptionPane.OK_CANCEL_OPTION,
-			    JOptionPane.PLAIN_MESSAGE
-				);
-	  	
-	  	if(retour == JOptionPane.OK_OPTION)
-		{
-	  		Compte temp = monPanneau.getCompte();
-	  		//listeComptes.add(temp);
-	  		maBase.Modification(temp, temp.getTitre(), temp.getUser(),temp.getPassword(),temp.getHost(),temp.getPort());
-	  		
-		}
-	  }
-  
-  protected void supprComptePop() throws ClassNotFoundException
-  {
-  	/*if(listeComptes.size()==0)
-  	{
-  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
-  	}
-  	else
-  	{
-  		panneauSelectionCompte monPanneau = new panneauSelectionCompte();
-  		int retour = JOptionPane.showConfirmDialog(
-					this,
-		    		monPanneau,
-		    		"supppression d'un compte",
-					JOptionPane.YES_NO_OPTION,
-		    		JOptionPane.PLAIN_MESSAGE
-					);
-	
-		if(retour == JOptionPane.OK_OPTION)
-		{
-			listeComptes.remove(monPanneau.getIndexSelection());
-			if(courant == monPanneau.getIndexSelection())
-			{
-				courant = 0;
-			}
-			else if(courant > monPanneau.getIndexSelection())
-			{
-				courant--;
-			}
-			
 		
-		}
-  	}*/
-	  GCompte monPanneau = new GCompte();
-	  	int retour = JOptionPane.showConfirmDialog(
-				this,
-				monPanneau,
-			    "enregistrement d'un compte",
-			   	JOptionPane.OK_CANCEL_OPTION,
-			    JOptionPane.PLAIN_MESSAGE
-				);
-	  	
-	  	if(retour == JOptionPane.OK_OPTION)
-		{
-	  		Compte temp = monPanneau.getCompte();
-	  		//listeComptes.add(temp);
-	  		maBase.Suppression(temp.getTitre(), temp.getUser(),temp.getPassword(),temp.getHost(),temp.getPort());
-	  		
-		}
-  }
-  protected void defComptePop() throws ClassNotFoundException, SQLException
-  {
-  	if(listeComptes.size()==0)
-  	{
-  		JOptionPane.showMessageDialog(this, "<html>Il n'existe aucun compte</html>");
-  	}
-  	else
-  	{
-  		panneauSelectionCompte monPanneau = new panneauSelectionCompte();
-  		Compte temp2 = (Compte)listeComptes.get(courant);
-  		int retour = JOptionPane.showConfirmDialog(
-					this,
-		    		monPanneau,
-		    		"compte actuel: "+temp2,
-					JOptionPane.YES_NO_OPTION,
-		    		JOptionPane.PLAIN_MESSAGE
-					);
 	
-		if(retour == JOptionPane.OK_OPTION)
-		{
-			courant = monPanneau.getIndexSelection();
-			Compte temp = (Compte)listeComptes.get(courant);
-			/*
-			popServer = temp.getHost();
-			user = temp.getUser();
-			password = temp.getPassword();
-			port = temp.getPort();
-			*/
-			try
-			{
-				// A changer pour faire le lien vers la classe BASE
-				//FileOutputStream fo = new FileOutputStream("data2.dat");
-				//DataOutputStream Do = new DataOutputStream(fo);
-				maBase.lireEnBase();
-			}
-			catch (Exception e)
-			{
-				System.out.println("marche po :( , echec du chargement des données");
-				//System.exit(0);
-			}
-		
-		}
-  	}
-  }
-
-  public static void main ( String args[] ) throws ClassNotFoundException, SQLException
-  {
-  	
-  	try
-	{
-		FileInputStream fi = new FileInputStream("Data.dat");
-		ObjectInputStream oi = new ObjectInputStream(fi);
-		listeComptes = (ArrayList) oi.readObject();
-		ResultSet rs=maBase.lireEnBase();
-		listeComptes.add(new Compte(rs.getString("titre"),rs.getString("users"),rs.getInt("port"),rs.getString("serveur"),rs.getString("passwords")));
-		//System.out.println(listeComptes);
+    try {
+		(new MonApplication()).setVisible(true);
+	} catch (ClassNotFoundException | SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
 	}
-	catch (IOException e)
-	{
-		System.out.println("Erreur: Échec du chargement des données");
-		//System.exit(0);
-	}
-	catch (ClassNotFoundException se)
-	{
-		System.out.println("Erreur: Classe non trouvé");
-	}
-	
-	
-	try
-	{
-		//////////////////////////////////////////
-		FileInputStream fi = new FileInputStream("data2.dat");//Ouvre le fichier
-		courant = fi.read();
-		//////////////////////////////////////////
-		
-		//lire.lireEnBase(String titre, String users, String passwords, String serveur, int port);
-	}
-	catch (IOException e)
-	{
-		System.out.println("Erreur: Échec du chargement des données");
-		//System.exit(0);
-	}
-	
-	
-    (new MonApplication()).setVisible(true);
 
   }
 
